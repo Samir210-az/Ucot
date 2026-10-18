@@ -4,6 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>MTT-FM · İşçi uçotu</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#f2b705">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="İşçi uçotu">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <style>
 :root{--bg:#e6e1d6;--card:#fff;--ink:#1f1d18;--mute:#6b675c;--line:#d2ccbd;--acc:#f2b705;--acc-ink:#1a1a1a;--ok:#0f8a5f;--due:#c2410c;--over:#7c3aed;--warn:#fff4d6;--warn-ink:#7a5a00}
 @media(prefers-color-scheme:dark){:root{--bg:#161619;--card:#222226;--ink:#f1f0ec;--mute:#a3a29c;--line:#3a3a41;--acc:#f2b705;--acc-ink:#1a1a1a;--ok:#3ecf9a;--due:#fb923c;--over:#a78bfa;--warn:#33290c;--warn-ink:#f0cf7a}}
@@ -131,6 +139,7 @@ footer a{color:var(--mute)}
       <button data-act="new-pay">Ödəniş</button>
       <button data-act="sheet">Maaş cədvəli (PDF)</button>
       <button data-act="xlsx">Maaş cədvəli (Excel)</button>
+      <button data-act="install" id="btnInstall" hidden>Tətbiqi yüklə</button>
       <details class="more">
         <summary aria-label="Digər əməliyyatlar">⋯</summary>
         <div class="menu">
@@ -138,6 +147,7 @@ footer a{color:var(--mute)}
           <button data-act="print">Çap</button>
           <button data-act="export">Ehtiyat nüsxə yüklə</button>
           <button data-act="import">Ehtiyat nüsxəni aç</button>
+          <button data-act="install-help">Ana ekrana əlavə et</button>
         </div>
       </details>
       <input type="file" id="file" accept="application/json" hidden>
@@ -461,6 +471,11 @@ document.addEventListener('click',e=>{
   }
   const id=b.dataset.id;
   switch(b.dataset.act){
+    case'install':installApp();break;
+    case'install-help':
+      if(deferredInstall)installApp();
+      else toast(isStandalone()?'Tətbiq artıq yüklənib.':'iPhone: Paylaş düyməsi → "Ana ekrana əlavə et". Android: brauzer menyusu → "Tətbiqi yüklə".');
+      break;
     case'info':openInfo(id);break;
     case'info-pdf':{
       const w=find(infoId);
@@ -838,6 +853,25 @@ function download(blob,name){
   setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
 function exportXlsx(){download(buildXlsx(),'MTT-FM-maas-cedveli-'+iso(new Date())+'.xlsx')}
+
+let deferredInstall=null;
+const isStandalone=()=>window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();
+  deferredInstall=e;
+  if(!isStandalone())$('#btnInstall').hidden=false;
+});
+window.addEventListener('appinstalled',()=>{deferredInstall=null;$('#btnInstall').hidden=true;toast('Tətbiq yükləndi')});
+function installApp(){
+  if(!deferredInstall)return;
+  const p=deferredInstall;
+  deferredInstall=null;
+  $('#btnInstall').hidden=true;
+  p.prompt();
+}
+if('serviceWorker' in navigator&&location.protocol!=='file:'){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
 
 render();
 </script>

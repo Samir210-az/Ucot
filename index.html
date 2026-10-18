@@ -1,0 +1,845 @@
+<!doctype html>
+<html lang="az">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MTT-FM · İşçi uçotu</title>
+<style>
+:root{--bg:#e6e1d6;--card:#fff;--ink:#1f1d18;--mute:#6b675c;--line:#d2ccbd;--acc:#f2b705;--acc-ink:#1a1a1a;--ok:#0f8a5f;--due:#c2410c;--over:#7c3aed;--warn:#fff4d6;--warn-ink:#7a5a00}
+@media(prefers-color-scheme:dark){:root{--bg:#161619;--card:#222226;--ink:#f1f0ec;--mute:#a3a29c;--line:#3a3a41;--acc:#f2b705;--acc-ink:#1a1a1a;--ok:#3ecf9a;--due:#fb923c;--over:#a78bfa;--warn:#33290c;--warn-ink:#f0cf7a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:980px;margin:0 auto;padding:16px 16px 40px}
+header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:14px}
+h1{font-size:20px;margin:0}
+header h1{border-bottom:4px solid var(--acc);padding-bottom:2px}
+h2{font-size:16px;margin:24px 0 10px}
+h3{font-size:16px;margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:var(--card);border-radius:8px;padding:8px 12px}
+button:hover{border-color:var(--acc)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.primary{background:var(--acc);color:var(--acc-ink);border-color:var(--acc);font-weight:600}
+.danger{color:var(--due)}
+.bar{display:flex;flex-wrap:wrap;gap:8px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;box-shadow:0 1px 2px rgba(0,0,0,.1)}
+.stat span{display:block;color:var(--mute);font-size:12px}
+.stat b{font-size:19px}
+.list{display:grid;gap:10px}
+.card{background:var(--card);border:1px solid var(--line);border-left:6px solid var(--acc);border-radius:12px;padding:14px;box-shadow:0 1px 2px rgba(0,0,0,.14),0 8px 18px rgba(0,0,0,.08)}
+.head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.meta{margin:2px 0 0;color:var(--mute);font-size:13px}
+.bal{font-weight:700;text-align:right;white-space:nowrap}
+.bal small{display:block;font-weight:400;color:var(--mute);font-size:12px}
+.bal.due{color:var(--due)}.bal.ok{color:var(--ok)}.bal.over{color:var(--over)}
+.note{background:var(--warn);color:var(--warn-ink);border-radius:8px;padding:7px 10px;font-size:13px;margin-bottom:10px}
+.acts{display:flex;flex-wrap:wrap;gap:6px}
+.acts button{padding:6px 10px;font-size:13px}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+th,td{padding:9px 10px;text-align:left;border-bottom:1px solid var(--line);font-size:14px}
+th{color:var(--mute);font-weight:500;font-size:12px}
+tr:last-child td{border-bottom:0}
+.tag{display:inline-block;padding:1px 8px;border-radius:99px;font-size:12px;border:1px solid var(--line)}
+.tag.req{border-color:var(--due);color:var(--due)}
+.empty{padding:22px;text-align:center;color:var(--mute);background:var(--card);border:1px dashed var(--line);border-radius:12px}
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);padding:0;width:min(440px,calc(100vw - 24px))}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+.dlg{padding:18px}
+.dlg h3{margin-bottom:12px}
+label{display:block;margin-bottom:10px;font-size:13px;color:var(--mute)}
+label input,label select,label textarea{color:var(--ink);display:block;width:100%;margin-top:4px;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);font-size:15px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.foot{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px;margin-top:6px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:10px 0}
+.cal .wd{text-align:center;font-size:11px;color:var(--mute)}
+.day{padding:6px 0;min-height:44px;font-size:14px;line-height:1.1}
+.day small{display:block;font-size:10px;color:var(--mute);min-height:11px}
+.day.full{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+.day.full small{color:var(--acc-ink)}
+.day.half{background:color-mix(in srgb,var(--acc) 28%,var(--card));border-color:var(--acc)}
+.calnav{display:flex;justify-content:space-between;align-items:center}
+.hint{font-size:12px;color:var(--mute);margin:0}
+.toast{position:fixed;left:50%;bottom:20px;max-width:calc(100vw - 32px);text-align:center;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 14px;border-radius:8px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.on{opacity:1}
+.more summary{list-style:none;cursor:pointer;border:1px solid var(--line);background:var(--card);border-radius:8px;padding:8px 14px;font-weight:700}
+.more summary::-webkit-details-marker{display:none}
+.more summary:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.menu{display:grid;gap:4px;margin-top:6px;padding:6px;border:1px solid var(--line);border-radius:10px;background:var(--card)}
+.menu button{border:0;text-align:left}
+.paylist{display:grid;gap:8px}
+.pay{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-width:0}
+.pay-main{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.pay-main b{min-width:0;overflow-wrap:anywhere}
+.pay-sum{white-space:nowrap;font-weight:700}
+.pay-meta{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:6px 0;color:var(--mute);font-size:13px}
+.pay-note{font-size:13px;color:var(--mute);margin-bottom:6px;overflow-wrap:anywhere}
+.pay.total{background:transparent;border-style:dashed}
+.head>div:first-child{min-width:0}
+h3,.meta,.note,.empty{overflow-wrap:anywhere}
+.row2>label{min-width:0}
+.sec{display:flex;align-items:center;gap:8px;margin:18px 0 8px}
+.card[data-card]{cursor:pointer}
+#dInfo{width:min(560px,calc(100vw - 24px))}
+.scroll{max-height:calc(100dvh - 44px);overflow-y:auto}
+.dlg h4{margin:16px 0 2px;font-size:14px}
+.mini{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0 4px}
+.mini div{background:var(--bg);border-radius:8px;padding:8px 10px;min-width:0}
+.mini span{display:block;font-size:12px;color:var(--mute)}
+.mini b{overflow-wrap:anywhere}
+.mini .wide{grid-column:1/-1}
+.line{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:4px 10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:14px}
+.line>span:first-child{min-width:0;overflow-wrap:anywhere}
+.line small{display:block;color:var(--mute);font-size:12px;overflow-wrap:anywhere}
+.line>b{font-weight:600;text-align:right}
+.line.tot{border-bottom:0;border-top:2px solid var(--line);font-weight:700}
+.foot.sticky{position:sticky;bottom:0;background:var(--card);padding:10px 0 2px;margin-top:10px}
+tfoot td{border-top:2px solid var(--line);border-bottom:0}
+.pad{display:block;width:100%;height:190px;border:1px dashed var(--mute);border-radius:10px;background:#fff;touch-action:none;cursor:crosshair}
+img.sig{display:block;max-height:34px;max-width:110px;background:#fff;border-radius:4px}
+#sheet{display:none}
+footer{margin-top:30px;text-align:center;font-size:13px}
+footer a{color:var(--mute)}
+@media print{.bar,.acts,footer,.noprint{display:none!important}body{background:#fff;color:#000}.card,.stat,table{border-color:#bbb}}
+@media print{
+  body.printing-sheet .wrap,body.printing-sheet dialog{display:none!important}
+  #sheet tr{break-inside:avoid}
+  body.printing-sheet #sheet{display:block}
+  #sheet{color:#000;font-size:12px}
+  #sheet h1{font-size:18px;margin:0 0 4px}
+  #sheet h2{font-size:14px;margin:18px 0 6px}
+  #sheet .sub{margin:0 0 10px;color:#444}
+  #sheet table{width:100%;border-collapse:collapse;background:#fff;border:0;border-radius:0}
+  #sheet th,#sheet td{border:1px solid #888;padding:5px 6px;color:#000;font-size:12px;text-align:left;vertical-align:middle}
+  #sheet th{background:#eee;font-weight:600}
+  #sheet td.r{text-align:right;white-space:nowrap}
+  #sheet tfoot td{font-weight:700;border-top:2px solid #000}
+  #sheet .sigcell{height:46px;min-width:130px}
+  #sheet img.sig{max-height:40px;max-width:130px}
+  #sheet table.rc{max-width:520px}
+  #sheet table.rc th{width:34%}
+}
+@media(prefers-reduced-motion:reduce){.toast{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>MTT-FM · İşçi uçotu</h1>
+    <div class="bar">
+      <button class="primary" data-act="new-worker">+ Yeni işçi</button>
+      <button data-act="new-pay">Ödəniş</button>
+      <button data-act="sheet">Maaş cədvəli (PDF)</button>
+      <button data-act="xlsx">Maaş cədvəli (Excel)</button>
+      <details class="more">
+        <summary aria-label="Digər əməliyyatlar">⋯</summary>
+        <div class="menu">
+          <button data-act="copy">Mətn kimi köçür</button>
+          <button data-act="print">Çap</button>
+          <button data-act="export">Ehtiyat nüsxə yüklə</button>
+          <button data-act="import">Ehtiyat nüsxəni aç</button>
+        </div>
+      </details>
+      <input type="file" id="file" accept="application/json" hidden>
+    </div>
+  </header>
+
+  <section class="stats" id="stats"></section>
+
+  <div class="list" id="list" style="margin-top:12px"></div>
+
+  <h2>Ödəniş jurnalı</h2>
+  <div id="pays"></div>
+
+  <footer><a href="https://instagram.com/securtiy_group" target="_blank" rel="noopener">By securtiy_group</a></footer>
+</div>
+
+<dialog id="dWorker"><form class="dlg" id="fWorker" novalidate>
+  <h3 id="wTitle">Yeni işçi</h3>
+  <input type="hidden" id="wId">
+  <label>Ad, soyad<input id="wName" required maxlength="80"></label>
+  <div class="row2">
+    <label>Gündəlik məbləğ (AZN)<input id="wRate" type="number" min="0" step="0.01" inputmode="decimal"></label>
+    <label>İşə başlama tarixi<input id="wStart" type="date"></label>
+  </div>
+  <label>Əvvəlki günlərin sayı
+    <input id="wOpen" type="number" min="0" step="0.5" inputmode="decimal" value="0">
+  </label>
+  <p class="hint">Təqvimdə işarələnməyən keçmiş günləri buraya yaz. Yarım gün üçün 0.5 yaz.</p>
+  <label>Qeyd<textarea id="wNote" rows="2" maxlength="300"></textarea></label>
+  <div class="foot"><button type="button" data-close>Ləğv et</button><button class="primary" type="submit">Yadda saxla</button></div>
+</form></dialog>
+
+<dialog id="dPay"><form class="dlg" id="fPay" novalidate>
+  <h3>Ödəniş</h3>
+  <label>İşçi<select id="pWorker" required></select></label>
+  <div class="row2">
+    <label>Növ
+      <select id="pKind"><option value="avans">Avans</option><option value="maaş">Maaş</option></select>
+    </label>
+    <label>Məbləğ (AZN)<input id="pAmount" type="number" min="0.01" step="0.01" inputmode="decimal" required></label>
+  </div>
+  <label>Tarix<input id="pDate" type="date"></label>
+  <label>Qeyd<input id="pNote" maxlength="200"></label>
+  <div class="foot"><button type="button" data-close>Ləğv et</button><button class="primary" type="submit">Əlavə et</button></div>
+</form></dialog>
+
+<dialog id="dSig"><form class="dlg" id="fSig" novalidate>
+  <h3>Elektron imza</h3>
+  <p class="meta" id="sInfo"></p>
+  <label>Verilmə tarixi<input id="sDate" type="date"></label>
+  <canvas id="sPad" class="pad" aria-label="İmza sahəsi"></canvas>
+  <p class="hint">İşçi imzasını barmağı və ya siçanla yuxarıdakı sahədə çəkir.</p>
+  <div class="foot">
+    <button type="button" id="sClear">Təmizlə</button>
+    <button type="button" id="sSkip">İmzasız saxla</button>
+    <button class="primary" type="submit">Təsdiq et</button>
+  </div>
+</form></dialog>
+
+<dialog id="dAtt"><div class="dlg">
+  <h3 id="aTitle"></h3>
+  <div class="calnav">
+    <button type="button" data-att="-1" aria-label="Əvvəlki ay">&lsaquo;</button>
+    <b id="aMonth"></b>
+    <button type="button" data-att="1" aria-label="Sonrakı ay">&rsaquo;</button>
+  </div>
+  <div class="cal" id="aGrid"></div>
+  <p class="hint" id="aHint"></p>
+  <p id="aSum" style="margin:10px 0 0"></p>
+  <div class="foot"><button class="primary" type="button" data-close>Bağla</button></div>
+</div></dialog>
+
+<dialog id="dInfo"><div class="dlg scroll">
+  <div id="iBody"></div>
+  <div class="foot sticky">
+    <button type="button" data-act="info-pdf">PDF</button>
+    <button type="button" data-act="info-xlsx">Excel</button>
+    <button class="primary" type="button" data-close>Bağla</button>
+  </div>
+</div></dialog>
+
+<div class="toast" id="toast" role="status"></div>
+<div id="sheet"></div>
+
+<script>
+const KEY='isci_ucot_v3';
+const MONTHS=['Yanvar','Fevral','Mart','Aprel','May','İyun','İyul','Avqust','Sentyabr','Oktyabr','Noyabr','Dekabr'];
+const $=s=>document.querySelector(s);
+const uid=()=>Math.random().toString(36).slice(2,10);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const parse=s=>{const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const fmt=n=>(Math.round(n*100)/100).toLocaleString('az',{maximumFractionDigits:2})+' AZN';
+const fmtDate=s=>s?s.split('-').reverse().join('.'):'tarix yoxdur';
+
+function seed(){
+  const mk=(name,days,start='',note='')=>({id:uid(),name,rate:30,start,opening:days,days:{},note});
+  const auto='Gün sayı başlama tarixindən hesablanıb, dəqiqləşdir.';
+  const workers=[
+    mk('Babayev Natiq',12.5),mk('Daşdiyev İbrahim',12.5),mk('Daşdiyev Tural',13),mk('Əliyev Əli',12),
+    mk('Xəlilov Ayaz',12),mk('Semedov Rahib',6.5),mk('Xaliqzadə Ramil',8),
+    mk('Hüseyinov Elşən (anbardar)',16,'2026-10-02',auto),
+    mk('Əmirov Ağası',25,'2026-09-23',auto),
+    mk('L.Savalan',16,'2026-10-02',auto),
+    mk('Həsənov Cəmil',10,'2026-10-08',auto)
+  ];
+  const adv=(name,amount)=>({id:uid(),wid:workers.find(x=>x.name.startsWith(name)).id,date:'',amount,kind:'avans',note:'',sig:''});
+  return{workers,payments:[adv('Xəlilov',40),adv('Semedov',50),adv('Hüseyinov',50),adv('Əmirov',500),adv('L.Savalan',200)]};
+}
+
+let db=load();
+
+function load(){
+  try{const r=localStorage.getItem(KEY);if(r){const v=JSON.parse(r);if(valid(v))return normalize(v)}}catch(e){}
+  return seed();
+}
+function normalize(v){
+  v.payments=v.payments.filter(p=>p.kind!=='sorğu');
+  v.workers.forEach(w=>{
+    if(w.type==='salary'){w.rate=30;w.note='Gün sayı daxil edilməlidir.'}
+    delete w.type;
+  });
+  return v;
+}
+function valid(v){return v&&Array.isArray(v.workers)&&Array.isArray(v.payments)&&v.workers.every(w=>w&&w.id&&typeof w.name==='string')}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){toast('Brauzer yaddaşına yazmaq mümkün olmadı. Məlumatı "Yüklə" ilə saxla.')}}
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),2600)}
+const find=id=>db.workers.find(w=>w.id===id);
+
+function markedDays(w){return Object.values(w.days||{}).reduce((a,b)=>a+b,0)}
+function totalDays(w){return markedDays(w)+(+w.opening||0)}
+
+function earned(w){return totalDays(w)*(+w.rate||0)}
+const paid=id=>db.payments.filter(p=>p.wid===id).reduce((a,p)=>a+p.amount,0);
+
+function render(){
+  const rows=db.workers.map(w=>{const e=earned(w),p=paid(w.id);return{w,e,p,r:e-p}});
+  const sum=k=>rows.reduce((a,x)=>a+x[k],0);
+  $('#stats').innerHTML=
+    `<div class="stat"><span>Hesablanıb</span><b>${fmt(sum('e'))}</b></div>`+
+    `<div class="stat"><span>Verilib</span><b>${fmt(sum('p'))}</b></div>`+
+    `<div class="stat"><span>Qalan borc</span><b>${fmt(rows.reduce((a,x)=>a+Math.max(x.r,0),0))}</b></div>`;
+
+  $('#list').innerHTML=rows.length?rows.map(card).join(''):'<div class="empty">Hələ işçi yoxdur. Yuxarıdakı "+ Yeni işçi" düyməsini bas.</div>';
+
+  $('#pays').innerHTML=
+    paySection('Avans verildi','avans','Hələ avans verilməyib.')+
+    paySection('Maaş ödənişləri','maaş','Hələ maaş ödənişi yoxdur.');
+}
+
+const sigSrc=p=>typeof p.sig==='string'&&/^data:image\/png;base64,[A-Za-z0-9+\/=]+$/.test(p.sig)?p.sig:'';
+
+function paySection(title,kind,empty){
+  const list=db.payments.filter(p=>p.kind===kind).reverse();
+  const head=`<h3 class="sec">${title} <span class="tag">${list.length}</span></h3>`;
+  if(!list.length)return head+`<div class="empty">${empty}</div>`;
+  const total=list.reduce((a,p)=>a+p.amount,0);
+  const rows=list.map(p=>{
+    const w=find(p.wid),s=sigSrc(p);
+    const sig=s?`<img class="sig" src="${s}" alt="İşçinin imzası">`:'<span class="tag req">imzasız</span>';
+    return`<div class="pay">
+      <div class="pay-main"><b>${esc(w?w.name:'Silinmiş işçi')}</b><span class="pay-sum">${fmt(p.amount)}</span></div>
+      <div class="pay-meta"><span>${esc(fmtDate(p.date))}</span>${sig}</div>
+      ${p.note?`<div class="pay-note">${esc(p.note)}</div>`:''}
+      <div class="acts"><button data-act="sign" data-id="${p.id}">${s?'Yenilə':'İmza'}</button><button data-act="receipt" data-id="${p.id}">Qəbz</button><button class="danger" data-act="del-pay" data-id="${p.id}">Sil</button></div>
+    </div>`;
+  }).join('');
+  return head+`<div class="paylist">${rows}<div class="pay total"><div class="pay-main"><b>Cəmi</b><span class="pay-sum">${fmt(total)}</span></div></div></div>`;
+}
+
+function card({w,e,p,r}){
+  const cls=r>0.004?'due':(r<-0.004?'over':'ok');
+  const lbl=r>0.004?'Qalıq':(r<-0.004?'Artıq verilib':'Qalıq yoxdur');
+  return`<article class="card" data-card="${w.id}">
+    <div class="head"><div><h3>${esc(w.name)}</h3><p class="meta">${totalDays(w)} gün × ${fmt(w.rate)} = ${fmt(e)} · verilib ${fmt(p)}</p></div>
+    <div class="bal ${cls}">${fmt(Math.abs(r))}<small>${lbl}</small></div></div>
+    ${w.note?`<div class="note">${esc(w.note)}</div>`:''}
+    <div class="acts">
+      <button class="primary" data-act="att" data-id="${w.id}">Gün işarələ</button>
+      <button data-act="info" data-id="${w.id}">Ətraflı</button>
+      <button data-act="pay" data-id="${w.id}">Ödəniş</button>
+      <button data-act="edit" data-id="${w.id}">Redaktə</button>
+      <button class="danger" data-act="del-worker" data-id="${w.id}">Sil</button>
+    </div></article>`;
+}
+
+const WD=['Bazar','B.ertəsi','Ç.axşamı','Çərşənbə','C.axşamı','Cümə','Şənbə'];
+const dayName=k=>WD[parse(k).getDay()];
+const kindName=k=>k==='avans'?'Avans':'Maaş';
+const slug=s=>s.replace(/[əƏıİöÖüÜçÇşŞğĞ]/g,c=>({'ə':'e','Ə':'E','ı':'i','İ':'I','ö':'o','Ö':'O','ü':'u','Ü':'U','ç':'c','Ç':'C','ş':'s','Ş':'S','ğ':'g','Ğ':'G'}[c])).replace(/[^A-Za-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40);
+
+function workerStats(w){
+  const mine=db.payments.filter(p=>p.wid===w.id);
+  const sum=k=>mine.filter(p=>p.kind===k).reduce((a,p)=>a+p.amount,0);
+  const a=sum('avans'),m=sum('maaş'),e=earned(w);
+  return{
+    days:Object.entries(w.days||{}).sort((x,y)=>x[0].localeCompare(y[0])),
+    open:+w.opening||0,total:totalDays(w),e,a,m,r:e-a-m,
+    pays:[...mine].sort((x,y)=>(x.date||'').localeCompare(y.date||''))
+  };
+}
+
+function infoHtml(w){
+  const s=workerStats(w),rate=+w.rate||0;
+  const lbl=s.r>0.004?'Qalıq':(s.r<-0.004?'Artıq verilib':'Qalıq yoxdur');
+  const days=(s.open?`<div class="line"><span>Əvvəlki günlər<small>təqvimdə tarixsiz</small></span><b>${s.open} gün · ${fmt(s.open*rate)}</b></div>`:'')+
+    s.days.map(([k,v])=>`<div class="line"><span>${esc(fmtDate(k))}<small>${dayName(k)}</small></span><b>${v===1?'Tam gün':'Yarım gün'} · ${fmt(v*rate)}</b></div>`).join('');
+  const pays=s.pays.map(p=>{
+    const g=sigSrc(p);
+    return`<div class="line"><span>${esc(fmtDate(p.date))}<small>${kindName(p.kind)}${p.note?' · '+esc(p.note):''}</small></span><b>${fmt(p.amount)}</b>${g?`<img class="sig" src="${g}" alt="İmza">`:'<span class="tag req">imzasız</span>'}</div>`;
+  }).join('');
+  return`<h3>${esc(w.name)}</h3>
+    <p class="meta">İşə başlama: ${w.start?esc(fmtDate(w.start)):'qeyd olunmayıb'} · gündəlik ${fmt(rate)}</p>
+    <div class="mini">
+      <div><span>İş günü</span><b>${s.total}</b></div>
+      <div><span>Hesablanıb</span><b>${fmt(s.e)}</b></div>
+      <div><span>Avans</span><b>${fmt(s.a)}</b></div>
+      <div><span>Maaş</span><b>${fmt(s.m)}</b></div>
+      <div class="wide"><span>${lbl}</span><b>${fmt(Math.abs(s.r))}</b></div>
+    </div>
+    <h4>İş günləri</h4>
+    ${days?days+`<div class="line tot"><span>Cəmi</span><b>${s.total} gün · ${fmt(s.e)}</b></div>`:'<div class="empty">Gün işarələnməyib.</div>'}
+    <h4>Avans və maaş</h4>
+    ${pays?pays+`<div class="line tot"><span>Cəmi</span><b>${fmt(s.a+s.m)}</b></div>`:'<div class="empty">Ödəniş qeydi yoxdur.</div>'}`;
+}
+
+let infoId=null;
+function openInfo(id){
+  const w=find(id);if(!w)return;
+  infoId=id;
+  $('#iBody').innerHTML=infoHtml(w);
+  $('#dInfo').showModal();
+  $('#dInfo .scroll').scrollTop=0;
+}
+
+function workerReportHtml(w){
+  const s=workerStats(w),rate=+w.rate||0;
+  const drows=(s.open?`<tr><td>Əvvəlki günlər (tarixsiz)</td><td class="r">${s.open}</td><td class="r">${fmt(s.open*rate)}</td></tr>`:'')+
+    s.days.map(([k,v])=>`<tr><td>${esc(fmtDate(k))} · ${dayName(k)}</td><td class="r">${v===1?'1 (tam)':'0.5 (yarım)'}</td><td class="r">${fmt(v*rate)}</td></tr>`).join('');
+  const prows=s.pays.map(p=>{
+    const g=sigSrc(p);
+    return`<tr><td>${esc(fmtDate(p.date))}</td><td>${kindName(p.kind)}${p.note?' · '+esc(p.note):''}</td><td class="r">${fmt(p.amount)}</td><td class="sigcell">${g?`<img class="sig" src="${g}" alt="İmza">`:''}</td></tr>`;
+  }).join('');
+  return`<h1>MTT-FM · İşçi hesabatı</h1><p class="sub">${esc(w.name)} · Tarix: ${esc(fmtDate(iso(new Date())))}</p>
+<table class="rc"><tbody>
+<tr><th>Ad, soyad</th><td>${esc(w.name)}</td></tr>
+<tr><th>İşə başlama</th><td>${w.start?esc(fmtDate(w.start)):'qeyd olunmayıb'}</td></tr>
+<tr><th>Gündəlik</th><td>${fmt(rate)}</td></tr>
+<tr><th>İş günü</th><td>${s.total}</td></tr>
+<tr><th>Hesablanıb</th><td>${fmt(s.e)}</td></tr>
+<tr><th>Avans</th><td>${fmt(s.a)}</td></tr>
+<tr><th>Maaş</th><td>${fmt(s.m)}</td></tr>
+<tr><th>Qalıq</th><td><b>${fmt(s.r)}</b></td></tr>
+</tbody></table>
+<h2>İş günləri</h2>
+${drows?`<table><thead><tr><th>Tarix</th><th>Gün</th><th>Məbləğ</th></tr></thead><tbody>${drows}</tbody><tfoot><tr><td>Cəmi</td><td class="r">${s.total}</td><td class="r">${fmt(s.e)}</td></tr></tfoot></table>`:'<p>Gün işarələnməyib.</p>'}
+<h2>Avans və maaş ödənişləri</h2>
+${prows?`<table><thead><tr><th>Tarix</th><th>Növ və qeyd</th><th>Məbləğ</th><th>İmza</th></tr></thead><tbody>${prows}</tbody><tfoot><tr><td colspan="2">Cəmi</td><td class="r">${fmt(s.a+s.m)}</td><td></td></tr></tfoot></table>`:'<p>Ödəniş qeydi yoxdur.</p>'}`;
+}
+
+function openWorker(id){
+  const w=id?find(id):null;
+  $('#wTitle').textContent=w?'İşçini redaktə et':'Yeni işçi';
+  $('#wId').value=w?w.id:'';
+  $('#wName').value=w?w.name:'';
+  $('#wRate').value=w?w.rate:30;
+  $('#wStart').value=w?w.start:iso(new Date());
+  $('#wOpen').value=w?w.opening:0;
+  $('#wNote').value=w?w.note:'';
+  $('#dWorker').showModal();
+  $('#wName').focus();
+}
+
+function openPay(id,kind){
+  $('#pWorker').innerHTML=db.workers.map(w=>`<option value="${w.id}">${esc(w.name)}</option>`).join('');
+  if(id)$('#pWorker').value=id;
+  $('#pKind').value=kind||'avans';
+  $('#pAmount').value='';
+  $('#pDate').value=iso(new Date());
+  $('#pNote').value='';
+  $('#dPay').showModal();
+  $('#pAmount').focus();
+}
+
+let att={id:null,y:0,m:0};
+function openAtt(id){const t=new Date();att={id,y:t.getFullYear(),m:t.getMonth()};renderAtt();$('#dAtt').showModal()}
+function renderAtt(){
+  const w=find(att.id);if(!w)return;
+  $('#aTitle').textContent=w.name;
+  $('#aMonth').textContent=MONTHS[att.m]+' '+att.y;
+  $('#aHint').textContent=`Günə toxun: tam gün ${fmt(w.rate)}, yarım gün ${fmt(w.rate/2)}, boş.`;
+  const first=new Date(att.y,att.m,1),n=new Date(att.y,att.m+1,0).getDate(),lead=(first.getDay()+6)%7;
+  let h=['B.e','Ç.a','Ç','C.a','C','Ş','B'].map(x=>`<span class="wd">${x}</span>`).join('');
+  for(let i=0;i<lead;i++)h+='<span></span>';
+  let month=0;
+  for(let d=1;d<=n;d++){
+    const k=iso(new Date(att.y,att.m,d)),v=w.days[k];
+    if(v)month+=v;
+    h+=`<button type="button" class="day ${v===1?'full':v===0.5?'half':''}" data-day="${k}">${d}<small>${v===1?'tam':v===0.5?'yarım':''}</small></button>`;
+  }
+  $('#aGrid').innerHTML=h;
+  $('#aSum').innerHTML=`Bu ay: <b>${month}</b> gün · Ümumi: <b>${totalDays(w)}</b> gün · Hesablanıb: <b>${fmt(earned(w))}</b>`;
+}
+
+document.addEventListener('click',e=>{
+  if(e.target.closest('.menu button'))document.querySelector('details.more').open=false;
+  if(e.target.closest('[data-close]')){e.target.closest('dialog').close();return}
+  const a=e.target.closest('[data-att]');
+  if(a){att.m+=+a.dataset.att;if(att.m<0){att.m=11;att.y--}if(att.m>11){att.m=0;att.y++}renderAtt();return}
+  const d=e.target.closest('[data-day]');
+  if(d){
+    const w=find(att.id),k=d.dataset.day,v=w.days[k];
+    if(!v)w.days[k]=1;else if(v===1)w.days[k]=0.5;else delete w.days[k];
+    save();renderAtt();render();return
+  }
+  const b=e.target.closest('[data-act]');
+  if(!b){
+    const c=e.target.closest('[data-card]');
+    if(c&&!window.getSelection().toString())openInfo(c.dataset.card);
+    return;
+  }
+  const id=b.dataset.id;
+  switch(b.dataset.act){
+    case'info':openInfo(id);break;
+    case'info-pdf':{
+      const w=find(infoId);
+      if(w)printSheet(workerReportHtml(w),'MTT-FM hesabat '+w.name);
+      break}
+    case'info-xlsx':{
+      const w=find(infoId);
+      if(w)download(buildWorkerXlsx(w),'MTT-FM-'+(slug(w.name)||'isci')+'-'+iso(new Date())+'.xlsx');
+      break}
+    case'new-worker':openWorker();break;
+    case'new-pay':openPay();break;
+    case'edit':openWorker(id);break;
+    case'pay':openPay(id);break;
+    case'att':openAtt(id);break;
+    case'del-worker':{
+      const w=find(id);
+      if(w&&confirm(`"${w.name}" və onun bütün ödəniş qeydləri silinsin?`)){
+        db.workers=db.workers.filter(x=>x.id!==id);
+        db.payments=db.payments.filter(p=>p.wid!==id);
+        save();render();
+      }
+      break}
+    case'del-pay':
+      if(confirm('Bu ödəniş qeydi silinsin?')){db.payments=db.payments.filter(p=>p.id!==id);save();render()}
+      break;
+    case'print':document.body.classList.remove('printing-sheet');window.print();break;
+    case'xlsx':exportXlsx();break;
+    case'sheet':printSheet(sheetHtml(),'MTT-FM maaş cədvəli '+iso(new Date()));break;
+    case'sign':openSig(id);break;
+    case'receipt':{
+      const p=db.payments.find(x=>x.id===id),w=p&&find(p.wid);
+      if(p)printSheet(receiptHtml(p),'MTT-FM qəbz '+(w?w.name:''));
+      break}
+    case'copy':copyText();break;
+    case'export':exportJson();break;
+    case'import':$('#file').click();break;
+  }
+});
+
+$('#fWorker').addEventListener('submit',e=>{
+  e.preventDefault();
+  const name=$('#wName').value.trim(),rate=parseFloat($('#wRate').value)||0;
+  if(!name){toast('Ad daxil et');$('#wName').focus();return}
+  if(rate<=0){toast('Gündəlik məbləği daxil et');$('#wRate').focus();return}
+  const data={name,rate,start:$('#wStart').value,opening:Math.max(0,parseFloat($('#wOpen').value)||0),note:$('#wNote').value.trim()};
+  const id=$('#wId').value;
+  if(id)Object.assign(find(id),data);
+  else db.workers.push({id:uid(),days:{},...data});
+  save();render();$('#dWorker').close();
+});
+
+$('#fPay').addEventListener('submit',e=>{
+  e.preventDefault();
+  const amount=parseFloat($('#pAmount').value);
+  if(!(amount>0)){toast('Məbləği düzgün daxil et');$('#pAmount').focus();return}
+  const pay={id:uid(),wid:$('#pWorker').value,date:$('#pDate').value||iso(new Date()),amount,kind:$('#pKind').value,note:$('#pNote').value.trim(),sig:''};
+  db.payments.push(pay);
+  save();render();$('#dPay').close();
+  openSig(pay.id);
+});
+
+$('#file').addEventListener('change',e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const v=JSON.parse(r.result);
+      if(!valid(v))throw new Error();
+      if(confirm('Mövcud məlumat yüklənən fayldakı ilə əvəz olunsun?')){db=normalize(v);save();render();toast('Məlumat yükləndi')}
+    }catch(err){toast('Fayl düzgün formatda deyil')}
+    e.target.value='';
+  };
+  r.readAsText(f);
+});
+
+function exportJson(){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(db,null,2)],{type:'application/json'}));
+  a.download='isci-ucot-'+iso(new Date())+'.json';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+
+function copyText(){
+  const lines=db.workers.map(w=>{
+    const e=earned(w),p=paid(w.id),r=e-p;
+    return`${w.name}: hesablanıb ${fmt(e)}, verilib ${fmt(p)}, qalıq ${fmt(r)}`;
+  });
+  const text='MTT-FM · İşçi hesabı ('+fmtDate(iso(new Date()))+')\n'+lines.join('\n');
+  (navigator.clipboard?navigator.clipboard.writeText(text):Promise.reject()).then(()=>toast('Köçürüldü')).catch(()=>toast('Köçürmək mümkün olmadı'));
+}
+
+const pad={ctx:null,drawn:false,drawing:false,id:null};
+const padEl=$('#sPad');
+
+function padInit(){
+  const r=padEl.getBoundingClientRect(),k=Math.min(window.devicePixelRatio||1,2);
+  padEl.width=Math.round(r.width*k);
+  padEl.height=Math.round(r.height*k);
+  const c=padEl.getContext('2d');
+  c.setTransform(k,0,0,k,0,0);
+  c.fillStyle='#fff';c.fillRect(0,0,r.width,r.height);
+  c.strokeStyle='#111';c.lineWidth=2.2;c.lineCap='round';c.lineJoin='round';
+  pad.ctx=c;pad.drawn=false;pad.drawing=false;
+}
+
+function padPos(e){const r=padEl.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]}
+
+padEl.addEventListener('pointerdown',e=>{
+  e.preventDefault();
+  padEl.setPointerCapture(e.pointerId);
+  pad.drawing=true;pad.drawn=true;
+  const[x,y]=padPos(e);
+  pad.ctx.beginPath();pad.ctx.moveTo(x,y);pad.ctx.lineTo(x+0.01,y);pad.ctx.stroke();
+});
+padEl.addEventListener('pointermove',e=>{
+  if(!pad.drawing)return;
+  const[x,y]=padPos(e);
+  pad.ctx.lineTo(x,y);pad.ctx.stroke();
+  pad.ctx.beginPath();pad.ctx.moveTo(x,y);
+});
+['pointerup','pointercancel'].forEach(t=>padEl.addEventListener(t,()=>{pad.drawing=false}));
+
+function openSig(id){
+  const p=db.payments.find(x=>x.id===id),w=p&&find(p.wid);
+  if(!p||!w)return;
+  pad.id=id;
+  $('#sInfo').textContent=`${w.name} · ${p.kind} · ${fmt(p.amount)}`;
+  $('#sDate').value=p.date||iso(new Date());
+  $('#dSig').showModal();
+  padInit();
+}
+
+function saveSig(withSig){
+  const p=db.payments.find(x=>x.id===pad.id);
+  if(!p)return;
+  const d=$('#sDate').value;
+  if(!d){toast('Tarixi daxil et');return}
+  if(withSig){
+    if(!pad.drawn){toast('İmza çəkilməyib');return}
+    p.sig=padEl.toDataURL('image/png');
+  }
+  p.date=d;
+  save();render();$('#dSig').close();
+}
+
+$('#sClear').addEventListener('click',padInit);
+$('#sSkip').addEventListener('click',()=>saveSig(false));
+$('#fSig').addEventListener('submit',e=>{e.preventDefault();saveSig(true)});
+
+function sheetHtml(){
+  const sumKind=(id,k)=>db.payments.filter(p=>p.wid===id&&p.kind===k).reduce((a,p)=>a+p.amount,0);
+  let tE=0,tA=0,tM=0,tR=0;
+  const rows=db.workers.map((w,i)=>{
+    const e=earned(w),a=sumKind(w.id,'avans'),m=sumKind(w.id,'maaş'),r=e-a-m;
+    tE+=e;tA+=a;tM+=m;tR+=r;
+    const basis=`${totalDays(w)} gün × ${fmt(w.rate)}`;
+    return`<tr><td>${i+1}</td><td>${esc(w.name)}</td><td>${esc(basis)}</td><td class="r">${fmt(e)}</td><td class="r">${fmt(a)}</td><td class="r">${fmt(m)}</td><td class="r">${fmt(r)}</td></tr>`;
+  }).join('');
+  const issued=[...db.payments].sort((x,y)=>(x.date||'').localeCompare(y.date||''));
+  const prow=issued.map(p=>{
+    const w=find(p.wid),s=sigSrc(p);
+    return`<tr><td>${esc(fmtDate(p.date))}</td><td>${esc(w?w.name:'Silinmiş işçi')}</td><td>${esc(p.kind)}</td><td class="r">${fmt(p.amount)}</td><td class="sigcell">${s?`<img class="sig" src="${s}" alt="İmza">`:''}</td></tr>`;
+  }).join('');
+  return`<h1>MTT-FM · Maaş cədvəli</h1><p class="sub">Tarix: ${esc(fmtDate(iso(new Date())))}</p>
+<table><thead><tr><th>№</th><th>Ad, soyad</th><th>Hesablama əsası</th><th>Hesablanıb</th><th>Avans</th><th>Maaş ödənişi</th><th>Qalıq</th></tr></thead><tbody>${rows}</tbody>
+<tfoot><tr><td colspan="3">Cəmi</td><td class="r">${fmt(tE)}</td><td class="r">${fmt(tA)}</td><td class="r">${fmt(tM)}</td><td class="r">${fmt(tR)}</td></tr></tfoot></table>
+<h2>Ödəniş qeydləri və imzalar</h2>
+${issued.length?`<table><thead><tr><th>Tarix</th><th>Ad, soyad</th><th>Növ</th><th>Məbləğ</th><th>İmza</th></tr></thead><tbody>${prow}</tbody></table>`:'<p>Ödəniş qeydi yoxdur.</p>'}`;
+}
+
+function receiptHtml(p){
+  const w=find(p.wid),s=sigSrc(p);
+  return`<h1>MTT-FM · ${p.kind==='avans'?'Avans qəbzi':'Maaş ödənişi qəbzi'}</h1>
+<table class="rc"><tbody>
+<tr><th>İşçi</th><td>${esc(w?w.name:'Silinmiş işçi')}</td></tr>
+<tr><th>Məbləğ</th><td><b>${fmt(p.amount)}</b></td></tr>
+<tr><th>Verilmə tarixi</th><td>${esc(fmtDate(p.date))}</td></tr>
+${p.note?`<tr><th>Qeyd</th><td>${esc(p.note)}</td></tr>`:''}
+<tr><th>İşçinin imzası</th><td class="sigcell">${s?`<img class="sig" src="${s}" alt="İmza">`:''}</td></tr>
+</tbody></table>`;
+}
+
+function printSheet(html,title){
+  const sheet=$('#sheet'),oldTitle=document.title;
+  sheet.innerHTML=html;
+  document.body.classList.add('printing-sheet');
+  document.title=title;
+  const done=()=>{
+    window.removeEventListener('afterprint',done);
+    document.body.classList.remove('printing-sheet');
+    document.title=oldTitle;
+    sheet.innerHTML='';
+  };
+  window.addEventListener('afterprint',done);
+  setTimeout(()=>window.print(),80);
+}
+
+const crcTable=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+function crc32(b){let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=crcTable[(c^b[i])&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0}
+
+function zipFiles(files){
+  const enc=new TextEncoder(),parts=[],central=[];
+  let offset=0;
+  files.forEach(f=>{
+    const name=enc.encode(f.name),crc=crc32(f.data),size=f.data.length;
+    const lh=new DataView(new ArrayBuffer(30));
+    lh.setUint32(0,0x04034b50,true);lh.setUint16(4,20,true);lh.setUint16(6,0x0800,true);
+    lh.setUint16(12,0x21,true);lh.setUint32(14,crc,true);lh.setUint32(18,size,true);lh.setUint32(22,size,true);
+    lh.setUint16(26,name.length,true);
+    parts.push(new Uint8Array(lh.buffer),name,f.data);
+    const ch=new DataView(new ArrayBuffer(46));
+    ch.setUint32(0,0x02014b50,true);ch.setUint16(4,20,true);ch.setUint16(6,20,true);ch.setUint16(8,0x0800,true);
+    ch.setUint16(14,0x21,true);ch.setUint32(16,crc,true);ch.setUint32(20,size,true);ch.setUint32(24,size,true);
+    ch.setUint16(28,name.length,true);ch.setUint32(42,offset,true);
+    central.push(new Uint8Array(ch.buffer),name);
+    offset+=30+name.length+size;
+  });
+  const cdSize=central.reduce((a,x)=>a+x.length,0);
+  const end=new DataView(new ArrayBuffer(22));
+  end.setUint32(0,0x06054b50,true);end.setUint16(8,files.length,true);end.setUint16(10,files.length,true);
+  end.setUint32(12,cdSize,true);end.setUint32(16,offset,true);
+  return new Blob([...parts,...central,new Uint8Array(end.buffer)],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+}
+
+const xmlText=v=>String(v).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const money=n=>Math.round(n*100)/100;
+function xCell(ref,v,style,formula){
+  if(v===''||v==null)return`<c r="${ref}" s="${style}"/>`;
+  if(typeof v==='number')return`<c r="${ref}" s="${style}">${formula?`<f>${formula}</f>`:''}<v>${v}</v></c>`;
+  return`<c r="${ref}" s="${style}" t="inlineStr"><is><t>${xmlText(v)}</t></is></c>`;
+}
+const X='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+const NS='http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+const RELNS='http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+const PKG='http://schemas.openxmlformats.org/package/2006/relationships';
+const xRow=(n,cells,ht)=>`<row r="${n}"${ht?` ht="${ht}" customHeight="1"`:''}>${cells.join('')}</row>`;
+const xSheet=(widths,rows,drawing)=>`${X}<worksheet xmlns="${NS}" xmlns:r="${RELNS}"><cols>${widths.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join('')}</cols><sheetData>${rows.join('')}</sheetData>${drawing?'<drawing r:id="rId1"/>':''}</worksheet>`;
+const xSerial=s=>{const[y,m,d]=s.split('-').map(Number);return Math.round((Date.UTC(y,m-1,d)-Date.UTC(1899,11,30))/864e5)};
+const xDate=s=>/^\d{4}-\d{2}-\d{2}$/.test(s||'')?xSerial(s):'';
+const SIG_ROW=42;
+
+function sigImage(p,row,col){
+  const s=sigSrc(p);
+  if(!s)return null;
+  try{
+    const data=Uint8Array.from(atob(s.slice(22)),c=>c.charCodeAt(0));
+    if(data.length<24||data[0]!==137||data[1]!==80)return null;
+    const w=((data[16]<<24)|(data[17]<<16)|(data[18]<<8)|data[19])>>>0,h=((data[20]<<24)|(data[21]<<16)|(data[22]<<8)|data[23])>>>0;
+    if(!w||!h)return null;
+    const k=Math.min(150/w,50/h,1);
+    return{data,row:row-1,col,cx:Math.round(w*k*9525),cy:Math.round(h*k*9525)};
+  }catch(e){return null}
+}
+
+const XLSX_STYLES=(()=>{
+  const xf=(num,font,fill,border)=>`<xf numFmtId="${num}" fontId="${font}" fillId="${fill}" borderId="${border}" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"/>`;
+  return`${X}<styleSheet xmlns="${NS}"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFF2B705"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color auto="1"/></left><right style="thin"><color auto="1"/></right><top style="thin"><color auto="1"/></top><bottom style="thin"><color auto="1"/></bottom><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="8">${[xf(0,0,0,0),xf(0,1,2,1),xf(0,0,0,1),xf(2,0,0,1),xf(14,0,0,1),xf(2,1,0,1),xf(0,1,0,1),xf(0,1,0,0)].join('')}</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
+})();
+
+function packXlsx(sheets){
+  const files=[],media=[],drawings=[];
+  sheets.forEach((sh,i)=>{
+    const n=i+1,pics=sh.images||[];
+    files.push([`xl/worksheets/sheet${n}.xml`,xSheet(sh.widths,sh.rows,pics.length)]);
+    if(!pics.length)return;
+    drawings.push(n);
+    let rels='',anchors='';
+    pics.forEach((p,j)=>{
+      media.push(p.data);
+      const m=media.length;
+      rels+=`<Relationship Id="rId${j+1}" Type="${RELNS}/image" Target="../media/image${m}.png"/>`;
+      anchors+=`<xdr:oneCellAnchor><xdr:from><xdr:col>${p.col}</xdr:col><xdr:colOff>38100</xdr:colOff><xdr:row>${p.row}</xdr:row><xdr:rowOff>38100</xdr:rowOff></xdr:from><xdr:ext cx="${p.cx}" cy="${p.cy}"/><xdr:pic><xdr:nvPicPr><xdr:cNvPr id="${j+2}" name="Imza ${m}"/><xdr:cNvPicPr/></xdr:nvPicPr><xdr:blipFill><a:blip r:embed="rId${j+1}"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill><xdr:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${p.cx}" cy="${p.cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic><xdr:clientData/></xdr:oneCellAnchor>`;
+    });
+    files.push([`xl/drawings/drawing${n}.xml`,`${X}<xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="${RELNS}">${anchors}</xdr:wsDr>`]);
+    files.push([`xl/drawings/_rels/drawing${n}.xml.rels`,`${X}<Relationships xmlns="${PKG}">${rels}</Relationships>`]);
+    files.push([`xl/worksheets/_rels/sheet${n}.xml.rels`,`${X}<Relationships xmlns="${PKG}"><Relationship Id="rId1" Type="${RELNS}/drawing" Target="../drawings/drawing${n}.xml"/></Relationships>`]);
+  });
+  const k=sheets.length;
+  files.push(
+    ['[Content_Types].xml',`${X}<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>${sheets.map((_,i)=>`<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')}${drawings.map(n=>`<Override PartName="/xl/drawings/drawing${n}.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>`).join('')}<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`],
+    ['_rels/.rels',`${X}<Relationships xmlns="${PKG}"><Relationship Id="rId1" Type="${RELNS}/officeDocument" Target="xl/workbook.xml"/></Relationships>`],
+    ['xl/workbook.xml',`${X}<workbook xmlns="${NS}" xmlns:r="${RELNS}"><sheets>${sheets.map((sh,i)=>`<sheet name="${xmlText(sh.name)}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join('')}</sheets><calcPr fullCalcOnLoad="1"/></workbook>`],
+    ['xl/_rels/workbook.xml.rels',`${X}<Relationships xmlns="${PKG}">${sheets.map((_,i)=>`<Relationship Id="rId${i+1}" Type="${RELNS}/worksheet" Target="worksheets/sheet${i+1}.xml"/>`).join('')}<Relationship Id="rId${k+1}" Type="${RELNS}/styles" Target="styles.xml"/></Relationships>`],
+    ['xl/styles.xml',XLSX_STYLES]
+  );
+  const enc=new TextEncoder();
+  const out=files.map(([name,text])=>({name,data:enc.encode(text)}));
+  media.forEach((data,i)=>out.push({name:`xl/media/image${i+1}.png`,data}));
+  return zipFiles(out);
+}
+
+function buildXlsx(){
+  const n=db.workers.length,last=4+n,L='ABCDEFGH';
+  const sumKind=(id,k)=>db.payments.filter(p=>p.wid===id&&p.kind===k).reduce((a,p)=>a+p.amount,0);
+  const head=['№','Ad, soyad','Gün','Gündəlik (AZN)','Hesablanıb (AZN)','Avans (AZN)','Maaş ödənişi (AZN)','Qalıq (AZN)'];
+  const r1=[
+    xRow(1,[xCell('A1','MTT-FM · Maaş cədvəli',7)]),
+    xRow(2,[xCell('A2','Tarix: '+fmtDate(iso(new Date())),0)]),
+    xRow(4,head.map((h,i)=>xCell(L[i]+'4',h,1)))
+  ];
+  let tD=0,tE=0,tA=0,tM=0;
+  db.workers.forEach((w,i)=>{
+    const r=5+i,days=totalDays(w),rate=+w.rate||0,e=money(days*rate),a=sumKind(w.id,'avans'),m=sumKind(w.id,'maaş');
+    tD+=days;tE+=e;tA+=a;tM+=m;
+    r1.push(xRow(r,[xCell('A'+r,i+1,2),xCell('B'+r,w.name,2),xCell('C'+r,days,2),xCell('D'+r,rate,3),xCell('E'+r,e,3,`C${r}*D${r}`),xCell('F'+r,a,3),xCell('G'+r,m,3),xCell('H'+r,money(e-a-m),3,`E${r}-F${r}-G${r}`)]));
+  });
+  const t=last+1,total=(c,v)=>xCell(c+t,money(v),5,n?`SUM(${c}5:${c}${last})`:null);
+  r1.push(xRow(t,[xCell('A'+t,'',6),xCell('B'+t,'Cəmi',6),total('C',tD),xCell('D'+t,'',6),total('E',tE),total('F',tA),total('G',tM),total('H',tE-tA-tM)]));
+
+  const pays=[...db.payments].sort((x,y)=>(x.date||'').localeCompare(y.date||''));
+  const r2=[xRow(1,['Tarix','Ad, soyad','Növ','Məbləğ (AZN)','İmza'].map((h,i)=>xCell('ABCDE'[i]+'1',h,1)))];
+  const pics=[];
+  let tp=0;
+  pays.forEach((p,i)=>{
+    const r=2+i,w=find(p.wid),img=sigImage(p,r,4);
+    tp+=p.amount;
+    if(img)pics.push(img);
+    r2.push(xRow(r,[xCell('A'+r,xDate(p.date),4),xCell('B'+r,w?w.name:'Silinmiş işçi',2),xCell('C'+r,kindName(p.kind),2),xCell('D'+r,money(p.amount),3),xCell('E'+r,'',2)],img?SIG_ROW:0));
+  });
+  const pt=2+pays.length;
+  r2.push(xRow(pt,[xCell('A'+pt,'',6),xCell('B'+pt,'Cəmi',6),xCell('C'+pt,'',6),xCell('D'+pt,money(tp),5,pays.length?`SUM(D2:D${pt-1})`:null),xCell('E'+pt,'',6)]));
+
+  return packXlsx([
+    {name:'Maaş cədvəli',widths:[5,28,8,16,18,14,20,14],rows:r1},
+    {name:'Ödənişlər',widths:[14,28,12,16,24],rows:r2,images:pics}
+  ]);
+}
+
+function buildWorkerXlsx(w){
+  const s=workerStats(w),rate=+w.rate||0;
+  const g=[xRow(1,['Tarix','Gün','Məbləğ (AZN)'].map((h,i)=>xCell('ABC'[i]+'1',h,1)))];
+  const amt=(r,v)=>xCell('C'+r,money(v*rate),3,`B${r}*'Xülasə'!$B$4`);
+  let r=2;
+  if(s.open){g.push(xRow(r,[xCell('A'+r,'Əvvəlki günlər (tarixsiz)',2),xCell('B'+r,s.open,2),amt(r,s.open)]));r++}
+  s.days.forEach(([k,v])=>{g.push(xRow(r,[xCell('A'+r,xDate(k),4),xCell('B'+r,v,2),amt(r,v)]));r++});
+  const gl=r-1;
+  g.push(xRow(r,[xCell('A'+r,'Cəmi',6),xCell('B'+r,s.total,5,gl>=2?`SUM(B2:B${gl})`:null),xCell('C'+r,money(s.e),5,gl>=2?`SUM(C2:C${gl})`:null)]));
+
+  const p3=[xRow(1,['Tarix','Növ','Məbləğ (AZN)','Qeyd','İmza'].map((h,i)=>xCell('ABCDE'[i]+'1',h,1)))];
+  const pics=[];
+  s.pays.forEach((p,i)=>{
+    const q=2+i,img=sigImage(p,q,4);
+    if(img)pics.push(img);
+    p3.push(xRow(q,[xCell('A'+q,xDate(p.date),4),xCell('B'+q,kindName(p.kind),2),xCell('C'+q,money(p.amount),3),xCell('D'+q,p.note||'',2),xCell('E'+q,'',2)],img?SIG_ROW:0));
+  });
+  const pt=2+s.pays.length;
+  p3.push(xRow(pt,[xCell('A'+pt,'Cəmi',6),xCell('B'+pt,'',6),xCell('C'+pt,money(s.a+s.m),5,s.pays.length?`SUM(C2:C${pt-1})`:null),xCell('D'+pt,'',6),xCell('E'+pt,'',6)]));
+
+  const kv=(row,k,v,style,formula)=>xRow(row,[xCell('A'+row,k,2),xCell('B'+row,v,style,formula)]);
+  const sum=[
+    xRow(1,[xCell('A1','MTT-FM · İşçi hesabatı',7)]),
+    xRow(2,[xCell('A2','Tarix: '+fmtDate(iso(new Date())),0)]),
+    kv(3,'Ad, soyad',w.name,2),
+    kv(4,'Gündəlik (AZN)',rate,3),
+    kv(5,'İşə başlama',xDate(w.start)||'qeyd olunmayıb',4),
+    kv(6,'İş günü',s.total,2,gl>=2?`SUM('Günlər'!B2:B${gl})`:null),
+    kv(7,'Hesablanıb (AZN)',money(s.e),3,'B6*B4'),
+    kv(8,'Avans (AZN)',s.a,3),
+    kv(9,'Maaş (AZN)',s.m,3),
+    kv(10,'Qalıq (AZN)',money(s.r),5,'B7-B8-B9')
+  ];
+  return packXlsx([
+    {name:'Xülasə',widths:[22,30],rows:sum},
+    {name:'Günlər',widths:[28,10,16],rows:g},
+    {name:'Ödənişlər',widths:[14,12,16,30,24],rows:p3,images:pics}
+  ]);
+}
+
+function download(blob,name){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=name;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+function exportXlsx(){download(buildXlsx(),'MTT-FM-maas-cedveli-'+iso(new Date())+'.xlsx')}
+
+render();
+</script>
+</body>
+</html>
